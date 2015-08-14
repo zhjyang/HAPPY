@@ -1,0 +1,70 @@
+我们有必要先了解一下Nginx配置文件里指令的继承关系：
+    Nginx配置文件分为好多块，常见的从外到内依次是「http」、「server」、「location」等等，
+    缺省的继承关系是从外到内，也就是说内层块会自动获取外层块的值作为缺省值（有例外，详见参考）。可以google
+在分析之前，这里有一份比较好的实例
+server {
+    listen 80;
+    server_name foo.com;
+
+    root /path;
+    index index.html index.htm index.php;
+
+    location / {
+        try_files $uri $uri/ /index.php;
+    }
+
+    location ~ \.php$ {
+        try_files $uri =404;
+        include fastcgi.conf;
+        fastcgi_pass 127.0.0.1:9000;
+    }
+}
+看一看是不是和网上很多不太一样，那现在就来分析下为什么？
+也许你在网上看到都是类似这样的配置：
+server {
+    listen 80;
+    server_name foo.com;
+    root /path;
+    location / {
+        index index.html index.htm index.php;
+        if (!-e $request_filename) {
+            rewrite . /index.php last;
+        }
+    }
+    location ~ \.php$ {
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME /path$fastcgi_script_name;
+        fastcgi_pass 127.0.0.1:9000;
+        fastcgi_index index.php;
+    }
+}
+  先从「index」指令入手吧，在问题配置中它是在「location」中定义的：
+    location / {
+        index index.html index.htm index.php;
+    }
+    一旦未来需要加入新的「location」，必然会出现重复定义的「index」指令，这是因为多个「location」是平级的关系，不存在继承，
+    此时应该在「server」里定义「index」，借助继承关系，「index」指令在所有的「location」中都能生效
+    
+  接下来看看「if」指令，说它是大家误解最深的Nginx指令毫不为过：
+  if (!-e $request_filename) {
+    rewrite . /index.php last;
+  }
+  很多人喜欢用「if」指令做一系列的检查，不过这实际上是「try_files」指令的职责：
+  try_files $uri $uri/ /index.php;
+  
+  下面看看「fastcgi_params」配置文件：
+  include fastcgi_params;
+  Nginx有两份fastcgi配置文件，分别是「fastcgi_params」和「fastcgi.conf」，它们没有太大的差异，
+  唯一的区别是后者比前者多了一行「SCRIPT_FILENAME」的定义：
+  fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+  注意：$document_root 和 $fastcgi_script_name 之间没有 /。
+  原本Nginx只有「fastcgi_params」，后来发现很多人在定义「SCRIPT_FILENAME」时使用了硬编码的方式，
+  于是为了规范用法便引入了「fastcgi.conf」
+  
+  此外，我们还需要考虑一个安全问题：在PHP开启「cgi.fix_pathinfo」的情况下，PHP可能会把错误的文件类型当作PHP文件来解析。
+  如果Nginx和PHP安装在同一台服务器上的话，那么最简单的解决方法是用「try_files」指令做一次过滤：
+  try_files $uri =404;
+  
+  这些描述之后是不是就对开始给到的配置有所了解领悟了呐，不过这个也不是最优的
+    
+    
