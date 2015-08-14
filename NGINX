@@ -3,20 +3,39 @@
     缺省的继承关系是从外到内，也就是说内层块会自动获取外层块的值作为缺省值（有例外，详见参考）。可以google
 在分析之前，这里有一份比较好的实例
 server {
-    listen 80;
-    server_name foo.com;
+    charset utf-8;
+    client_max_body_size 128M;
 
-    root /path;
-    index index.html index.htm index.php;
+    listen 80; ## 监听 ipv4 上的 80 端口
+    #listen [::]:80 default_server ipv6only=on; ## 监听 ipv6 上的 80 端口
+
+    server_name mysite.local;
+    root        /path/to/basic/web;
+    index       index.php;
+
+    #access_log  /path/to/basic/log/access.log main;
+    #error_log   /path/to/basic/log/error.log;
 
     location / {
-        try_files $uri $uri/ /index.php;
+        # 如果找不到真实存在的文件，把请求分发至 index.php
+        try_files $uri $uri/ /index.php?$args;
     }
 
+    # 若取消下面这段的注释，可避免 Yii 接管不存在文件的处理过程（404）
+    #location ~ \.(js|css|png|jpg|gif|swf|ico|pdf|mov|fla|zip|rar)$ {
+    #    try_files $uri =404;
+    #}
+    #error_page 404 /404.html;
+
     location ~ \.php$ {
-        try_files $uri =404;
         include fastcgi.conf;
-        fastcgi_pass 127.0.0.1:9000;
+        fastcgi_pass   127.0.0.1:9000;
+        #fastcgi_pass unix:/var/run/php5-fpm.sock;
+        try_files $uri =404;
+    }
+
+    location ~ /\.(ht|svn|git) {
+        deny all;
     }
 }
 看一看是不是和网上很多不太一样，那现在就来分析下为什么？
