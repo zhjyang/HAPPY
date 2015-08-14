@@ -1,6 +1,33 @@
 # 建议使用NotePad++打开该文本
-# baseUrl : http://wwwmobile03.intranet.corp/external
-# action  : controller/action
+# 请求前缀 : http://wwwmobile03.intranet.corp/external
+# 请求  : controller/action  
 #
 #####################################################
+
+
 1：获取我制定的频道
+请求 : talk/getMyChannel
+参数：{
+	userId: 1
+}
+返回数据：{
+  "code": "00001",				// 00003 参数错误
+  "msg": "操作成功！",
+  "evn": "pro",
+  "time": 1439519717,
+  "data": [						// null 没有结果
+    {
+      "id": "1168",
+      "logo": "",
+      "description": "",
+      "name": "技术",
+      "type": "liaoba"
+    },...
+  ]
+}
+说明：获取我的频道
+
+
+
+
+
