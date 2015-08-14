@@ -1,0 +1,234 @@
+#############################################################
+安装Nginx1.80+MySQL5.6+PHP5.5
+#############################################################
+1、虚拟机安装CentOS
+	选择最小化安装
+
+2、设置IP地址、网关、DNS：请参考
+	可以使用ifup eth0 --快速
+	【实时地手动修改一些网络接口参数，可以利用ifconfig来实现，如果是要直接以配置文件，
+	  亦即是在 /etc/sysconfig/network-scripts里面的ifcfg-ethx等文件的设置参数来启动的话，
+	  那就得要通过ifdown或ifup来实现
+	】
+	配置文件详解
+	DEVICE=eth0           #指出设备名称
+	NM_CONTROLLED=yes     #network mamager的参数，实时生效，不需要重启
+	ONBOOT=yes            #设置为yes，开机自动启用网络连接
+	IPADDR=192.168.21.129 #IP地址
+	BOOTPROTO=none        #设置为none禁止DHCP，设置为static启用静态IP地址，设置为dhcp开启DHCP服务
+	NETMASK=255.255.255.0 #子网掩码
+	DNS1=8.8.8.8          #第一个dns服务器
+	TYPE=Ethernet         #网络类型为：Ethernet
+	GATEWAY=192.168.21.2  #设置网关
+	DNS2=8.8.4.4          #第二个dns服务器
+	IPV6INIT=no           #禁止IPV6
+	USERCTL=no            #是否允许非root用户控制该设备，设置为no，只能用root用户更改
+	HWADDR=00:0C:29:2C:E1:0F   #网卡的Mac地址
+	PREFIX=24
+	DEFROUTE=yes
+	IPV4_FAILURE_FATAL=yes
+	NAME="System eth0"    #定义设备名称
+	wq!   #保存退出
+
+3、配置防火墙，开始80端口、3306端口、161端口
+	vi /etc/sysconfig/iptables
+	
+	-A INPUT -m state --state NEW -m tcp -p tcp --dport 80 -j ACCEPT
+	-A INPUT -m state --state NEW -m tcp -p tcp --dport 3306 -j ACCEPT
+	-A INPUT -m state --state NEW -m udp -p udp --dport 161 -j ACCEPT	
+	【添加到默认的22端口这条规则的下面】
+	/etc/init.d/iptables restart #最后重启防火墙使配置生效
+
+4、关闭SELINUX
+	vi /etc/selinux/config
+	#SELINUX=enforcing #注释掉
+	#SELINUXTYPE=targeted #注释掉
+	SELINUX=disabled #增加
+	:wq 保存，关闭
+	shutdown -r now #重启系统
+	【或者可以sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config  需要重启】
+	
+	
+5、安装Nginx+MySQL+PHP
+（1）清理已经安装包
+	#搜索apache包
+	rpm -qa http*  mysql php
+	#强制卸载apache包
+	rpm -e --nodeps 查询出来的文件名
+	#检查是否卸载干净
+	rpm -qa|grep http*
+
+（2）安装编译工具及库文件（使用CentOS yum命令安装）
+	yum -y install make gcc gcc-c++ gcc-g77 autoconf curl curl-devel zlib zlib-devel openssl openssl-devel gd gd-devel freetype* libxml2 libxml2-devel libevent libevent-devel libpng* libjpeg* libtool* glib2 glib2-devel unzip krb5 krb5-devel ncurses*
+				   
+（2）下载软件包：
+	软件源代码包存放位置：/usr/local/software
+	
+	编译安装说明
+	./configure-->make-->make install
+	./configure配置脚本功能就是对你的系统做很多的测试，以用来检测出你的安装平台的目标特征，比如它会检测你是不是有CC或GCC，它是个shell脚本，是autoconf的工具的基本应用，它会产生一个输出文件"./Makefiles"，接下来make程序通过该文件来实现编译。
+	'./configure --help'命令就可以看到可用的所有选项
+	最重要的参数：$ ./configure --prefix=/usr/locl/application  重新安置他的结构独立部分 卸载直接删除这个文件即可
+	不指定prefix，
+	则可执行文件默认放在/usr/local/bin，
+	库文件默认放在/usr/local/lib，
+	配置文件默认放在 /usr/local/etc。
+	其它的资源文件放在/usr/local/share。
+	你要卸载这个程序，要么在原来的make目录下用一次make uninstall
+	
+	
+	需要编译安装的文件
+	cmake  -- 编译安装mysql
+	pcre 	PCRE(Perl Compatible Regular Expressions)是一个Perl库，包括 perl 兼容的正则表达式库
+		./configure	--prefix=/usr/local/pcre
+	关于PHP依赖包
+	libiconv 	libiconv库为需要做转换的应用提供了一个iconv()的函数，以实现一个字符编码到另一个字符编码的转换
+		http://ftp.gnu.org/gnu/libiconv/libiconv-1.14.tar.gz
+		./configure --prefix=/usr/local/libiconv
+	libmcrypt  	libmcrypt是加密算法扩展库
+		ftp://mcrypt.hellug.gr/pub/crypto/mcrypt/libmcrypt/libmcrypt-2.5.7.tar.gz
+		默认安装
+		为了让你mcrypt编译安装通过，需要修改
+		vi  /etc/ld.so.conf
+			最后一行添加
+			/usr/local/lib/
+			载入
+			ldconfig  ldconfig是一个动态链接库管理命令
+	Mhash     	Mhash是基于离散数学原理的不可逆向的php加密方式扩展库，其在默认情况下不开启
+		本人在windows下载后ftp到虚拟机
+	
+	mcrypt    	mcrypt 是 php 里面重要的加密支持扩展库，Mcrypt扩展库可以实现加密解密功能，就是既能将明文加密，也可以密文还原。
+		http://sourceforge.net/projects/mcrypt/files/
+		在windows下载后上传
+		
+		
+	添加不同用户组
+	www   mysql
+############################################################
+NGINX安装
+	groupadd www #添加www组
+	useradd -g www www -s /bin/false #创建nginx运行账户www并加入到www组，不允许www用户直接登录系统
+	
+	// 是否需要其他扩展？
+	// 安装ngx_pagespeed库 ngx_pagespeed 是一个 Nginx 的扩展模块，可以加速你的网站，减少页面加载时间，它会自动将一些提升web性能的实践应用到网页和相关的资源（CSS、JS和图片）上，无需你修改内容和流程。
+	
+	开始安装ngnix
+	./configure --prefix=/usr/local/nginx \
+				--user=www --group=www \
+				--with-http_stub_status_module \
+				--with-openssl=/usr/ \
+				--with-pcre=/usr/local/software/pcre-8.37		注意:--with-pcre=指向的是源码包解压的路径，而不是安装的路径，否则会报错
+	安装完成可以启用nginx了
+	/usr/local/nginx/sbin/nginx
+	vim /etc/init.d/nginx设置nginx开机启动 shell脚本
+	chmod 775 /etc/init.d/nginx #赋予文件执行权限
+	chkconfig nginx on #设置开机启动
+	service nginx restart  or  /etc/init.d/nginx restart  重启
+	
+############################################################	
+MYSQL安装
+	groupadd mysql #添加mysql组
+	useradd -g mysql mysql -s /bin/false #创建用户mysql并加入到mysql组，不允许mysql用户直接登录系统
+	mkdir -p /data/mysql #创建MySQL数据库存放目录
+	chown -R mysql:mysql /data/mysql #设置MySQL数据库目录权限
+	mkdir -p /usr/local/mysql #创建MySQL安装目录
+	
+	开始安装mysql服务
+	下载mysqll - 解压缩 使用cmake编译安装
+	cmake . -DCMAKE_INSTALL_PREFIX=/usr/local/mysql -DMYSQL_DATADIR=/data/mysql -DSYSCONFDIR=/etc
+	
+	编译安装 make && make install
+	
+	如果系统中有my.cnf 请备份
+	mv /etc/my.cnf /etc/my.cnf.bak
+	如果愿意也可以复制配置文件到etc下
+	cp support-files/my-default.cnf /etc/my.cnf
+	
+	执行初始化配置脚本，创建系统自带的数据库和表，注意配置文件的路径
+	/usr/local/mysql/scripts/mysql_install_db --defaults-file=/etc/my.cnf --basedir=/usr/local/mysql --datadir=/data/mysql --user=mysql
+	
+	#拷贝脚本
+	cp support-files/mysql.server /etc/init.d/mysqld
+	#赋予权限
+	chmod +x /etc/init.d/mysqld
+	
+	chkconfig mysqld on
+	启动MySQL
+	service mysqld start
+	或者
+	/etc/init.d/mysql start
+	
+	修改/etc/profile文件
+	vi /etc/profile
+	在文件末尾添加
+	PATH=/usr/local/mysql/bin:$PATH
+	export PATH
+	配置立刻生效source /etc/profile
+	
+	登陆测试，默认是没有密码,直接回车就可进入mysql -uroot -p
+	
+	下面这两行把myslq的库文件链接到系统默认的位置，这样你在编译类似PHP等软件时可以不用指定mysql的库文件地址。
+	ln -s /usr/local/mysql/lib/mysql /usr/lib/mysql
+	ln -s /usr/local/mysql/include/mysql /usr/include/mysql
+
+	直接修改密码/usr/local/mysql/bin/mysqladmin -u root -p password "zhang@1209" #修改密码
+	service mysqld restart #重启
+	到此，mysql安装完成！
+	
+#########################################################
+开始安装PHP-5.5
+	下载软件包：
+	安装目录/usr/local/php
+	解压编译
+	./configure --prefix=/usr/local/php --with-config-file-path=/usr/local/php/etc --enable-fpm --with-fpm-user=www --with-fpm-group=www --with-mysql=mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --with-iconv-dir --with-freetype-dir --with-jpeg-dir --with-png-dir --with-zlib --with-libxml-dir=/usr --enable-xml --disable-rpath --enable-magic-quotes --enable-safe-mode --enable-bcmath --enable-shmop --enable-sysvsem --enable-inline-optimization --with-curl --with-curlwrappers --enable-mbregex --enable-mbstring --with-mcrypt --enable-ftp --with-gd --enable-gd-native-ttf --with-openssl --with-mhash --enable-pcntl --enable-sockets --with-xmlrpc --enable-zip --enable-soap --without-pear --with-gettext --disable-fileinfo --enable-maintainer-zts
+	make && make install
+	
+	复制php.ini配置文件
+	cp php.ini-production /usr/local/php/etc/php.ini #复制php配置文件到安装目录
+	
+	rm -rf /etc/php.ini #删除系统自带配置文件
+	ln -s /usr/local/php/etc/php.ini /etc/php.ini #添加软链接
+	ln -s /usr/local/php/bin/php /usr/bin/php #添加软连接
+	
+	修改fpm配置php-fpm.conf.default文件名称
+	cp /usr/local/php/etc/php-fpm.conf.default /usr/local/php/etc/php-fpm.conf
+	
+	vim /usr/local/php/etc/php-fpm.conf #编辑
+	user = www #设置php-fpm运行账号为www
+	group = www #设置php-fpm运行组为www
+	pid = run/php-fpm.pid #取消前面的分号
+	
+	复制php-fpm启动脚本到init.d
+	cp sapi/fpm/init.d.php-fpm /etc/init.d/php-fpm
+	赋予执行权限
+	chmod +x /etc/init.d/php-fpm
+	添加为启动项chkconfig --add php-fpm
+	设置开机启动chkconfig php-fpm on
+	
+	立即启动php-fpm
+	service php-fpm start
+	#或者
+	/etc/init.d/php-fpm start
+	
+	如果是线上 /usr/local/php/etc/php.ini
+	找到：;date.timezone =
+	修改为：date.timezone = PRC #设置时区
+	找到：expose_php = On
+	修改为：expose_php = OFF #禁止显示php版本的信息
+	找到：display_errors = On
+	修改为：display_errors = OFF #关闭错误提示
+	
+	
+########################################################
+配置NGINX支持PHP
+	vim /usr/local/nginx/conf/nginx.conf
+	修改/usr/local/nginx/conf/nginx.conf 配置文件,需做如下修改
+	user www www; #首行user去掉注释,修改Nginx运行组为www www；必须与/usr/local/php/etc/php-fpm.conf中的user,group配置相同，否则php运行出错
+	index index.php index.html index.htm; #添加index.php
+	
+	
+	下面就是nginx的配置，网上有很多
+
+
+	
+	
