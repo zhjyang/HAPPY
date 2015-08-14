@@ -1,0 +1,6 @@
+# 建议使用NotePad++打开该文本
+# baseUrl : http://wwwmobile03.intranet.corp/external
+# action  : controller/action
+#
+#####################################################
+1：获取我制定的频道
