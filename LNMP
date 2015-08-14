@@ -1,4 +1,4 @@
-#############################################################
+﻿#############################################################
 安装Nginx1.80+MySQL5.6+PHP5.5
 #############################################################
 1、虚拟机安装CentOS
@@ -59,7 +59,7 @@
 	rpm -qa|grep http*
 
 （2）安装编译工具及库文件（使用CentOS yum命令安装）
-	yum -y install make gcc gcc-c++ gcc-g77 autoconf curl curl-devel zlib zlib-devel openssl openssl-devel gd gd-devel freetype* libxml2 libxml2-devel libevent libevent-devel libpng* libjpeg* libtool* glib2 glib2-devel unzip krb5 krb5-devel ncurses*
+	yum -y install make gcc gcc-c++ gcc-g77 autoconf curl curl-devel zlib zlib-devel openssl openssl-devel gd gd-devel freetype* libxml2 libxml2-devel libevent libevent-devel libpng* libjpeg* libtool* glib2 glib2-devel unzip krb5 krb5-devel ncurses* cifs*
 				   
 （2）下载软件包：
 	软件源代码包存放位置：/usr/local/software
@@ -180,7 +180,7 @@ MYSQL安装
 	下载软件包：
 	安装目录/usr/local/php
 	解压编译
-	./configure --prefix=/usr/local/php --with-config-file-path=/usr/local/php/etc --enable-fpm --with-fpm-user=www --with-fpm-group=www --with-mysql=mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --with-iconv-dir --with-freetype-dir --with-jpeg-dir --with-png-dir --with-zlib --with-libxml-dir=/usr --enable-xml --disable-rpath --enable-magic-quotes --enable-safe-mode --enable-bcmath --enable-shmop --enable-sysvsem --enable-inline-optimization --with-curl --with-curlwrappers --enable-mbregex --enable-mbstring --with-mcrypt --enable-ftp --with-gd --enable-gd-native-ttf --with-openssl --with-mhash --enable-pcntl --enable-sockets --with-xmlrpc --enable-zip --enable-soap --without-pear --with-gettext --disable-fileinfo --enable-maintainer-zts
+	./configure --prefix=/usr/local/php --with-config-file-path=/usr/local/php/etc --enable-fpm --with-fpm-user=www --with-fpm-group=www --with-mysql=mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --with-iconv-dir --with-freetype-dir --with-jpeg-dir --with-png-dir --with-zlib --with-libxml-dir=/usr --enable-xml --disable-rpath --enable-bcmath --enable-shmop --enable-sysvsem --enable-inline-optimization --with-curl --enable-mbregex --enable-mbstring --with-mcrypt --enable-ftp --with-gd --enable-gd-native-ttf --with-openssl --with-mhash --enable-pcntl --enable-sockets --with-xmlrpc --enable-zip --enable-soap --without-pear --with-gettext --disable-fileinfo --enable-maintainer-zts
 	make && make install
 	
 	复制php.ini配置文件
@@ -228,7 +228,29 @@ MYSQL安装
 	
 	
 	下面就是nginx的配置，网上有很多
-
+	
+	
+#########################################################
+YII2的安装
+	通过 Composer 安装
+	Composer 是什么
+	curl -sS https://getcomposer.org/installer | php
+	【在这个过程中，发现原来编译安装的PHP有问题，如果重新编译呐？暂时对以上的编译安装参数做了处理】
+	mv composer.phar /usr/local/bin/composer
+	
+	安装完成之后，想用虚拟机挂在本地硬盘，这样开发在本地，而运行可以在虚拟环境下完成
+	1、如何实现挂载
+	首先在windows下共享所需挂载的文件  查看共享路径\\JIANYANG\local    JIANYANG可能是失败的  故改成本机IP
+	进入虚拟主机 命令如下
+	mount -t cifs -o username=jianyang1209@outlook.com,password=zhjyang1209 //JIANYANG/local /var/www
+	这里便实现了挂载，可是我想开机便挂载完成
+	vim /etc/fstab
+	在最后添加
+	//JIANYANG/local /var/www cifs default,username=jianyang1209@outlook.com,,password=zhjyang1209,gid=500,uid=500 0 2
+	
+	可是我的IP会变化啊，那不是每次都要修改，这里可以挂载多个，失败也没问题的
+	完成挂载
+	可以编辑的时候，返现了乱码，但是我已经设置为utf-
 
 	
 	
