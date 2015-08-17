@@ -321,3 +321,22 @@ YII2的安装
 	
 ##########################################################
 先到这里，关于如何开机启用redis和memcacehd待写
+	redis
+	1、设置redis.conf中daemonize为yes,确保守护进程开启。
+	2、编写开机自启动脚本
+		vi /etc/init.d/redis
+	3、保存并设置权限，执行
+		在设置chkconfig redis on 的时候
+		service redis does not support chkconfig
+		原因很简单
+		必须把下面两行注释放在/etc/init.d/redis文件靠前的注释中
+		# chkconfig:   2345 90 10								
+		# description:  ****
+		上面的注释的意思是，redis服务必须在运行级2，3，4，5下被启动或关闭，启动的优先级是90，关闭的优先级是10。
+		
+	memecached 启用脚本 相同的方式
+	两个重要的服务搞定
+	
+	
+###########################################################
+到这里基本的环境就搞定了，可以开心玩耍。。。。。
