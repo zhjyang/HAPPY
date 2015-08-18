@@ -51,27 +51,35 @@
 
 
 #########################################################
-3：推送论坛贴，检测是否已制定
-请求：talk/checkPush
+3：推送论坛贴，检测是否已制定 -- 进入详细页面，
+请求：talk/getDetailById
 参数：{
-	userId: 1212,
-	liaobaId: 11122
+	liaobaId: 1212,
+	topicId: *****，
+	userId: ***,
+	page: [1],
+	limit: [10],
+	sort: [asc]
 }
 返回数据：{
 	"code": "00001",			// 00003 参数错误
 	"msg": "操作成功！",
 	"evn": "pro",
 	"time": 1439865100,
-	"data": {					
-		"draft": false,			// 是否已制定 boolen
-		"count": 5,				// 已制定总数
-		"info": {				// 该聊吧信息【null 聊吧不存在】
-			"id": "3443",
-			"logo": "",
-			"description": "",
-			"name": "",
-			"type": "liaoba"
-		}
+	"data": {	
+		****						// 原来结构不变
+		"push": {
+			"draft": false,			// 是否已制定 boolen
+			"count": 5,				// 已制定总数
+			"info": {				// 该聊吧信息【null 聊吧不存在】
+				"id": "3443",
+				"logo": "",
+				"description": "",
+				"name": "",
+				"type": "liaoba"
+			}
+		} 
+		
 	}
 }
 
