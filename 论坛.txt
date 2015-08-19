@@ -107,7 +107,7 @@
 5：只看楼主
 请求：talk/getDetailById
    在原有接口中添加一数据结构
-   showOwer: false           // boolen类型  
+   showOwner: false           // boolen类型  
    
   
 
